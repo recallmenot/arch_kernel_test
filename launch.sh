@@ -2,19 +2,30 @@
 
 source ./built/config
 
+if [[ $GUEST_DISK_TYPE == "p" ]]; then
+	disk_command="-drive format=raw,file=$GUEST_DISK_PATH,media=disk,if=none,id=root_disk,cache=none"
+else
+	disk_command="-drive format=qcow2,file=$GUEST_DISK_PATH,media=disk,if=none,id=root_disk,cache=none"
+fi
+
+if [[ $PCIE_ENABLE == "y" ]]; then
+	pcie_addr=$(lspci -n -d $PCIE_VEN_DEV | cut -d' ' -f1)
+	pcie_command="-device vfio-pci,host=$pcie_addr"
+else
+	pcie_command=''
+fi
+
 qemu-system-x86_64 \
 	-enable-kvm \
 	-m 4G \
 	-smp cores=4,threads=2,sockets=1,maxcpus=8 \
-	-drive format=raw,file=/dev/disk/by-id/usb-Intenso_High_Speed_Line_12210600003542-0:0,media=disk,if=none,id=ts_usb,cache=none \
+	$disk_command \
 	-device ahci,id=ahcibus \
-	-device ide-hd,drive=ts_usb,bus=ahcibus.0 \
+	-device ide-hd,drive=root_disk,bus=ahcibus.0 \
 	-initrd "$SCRIPT_DIR/built/initramfs.img" \
 	-kernel "$SCRIPT_DIR/built/bzImage" \
-	-append "root=UUID=a03bcef6-dee0-4de3-a505-f0c684cb3824" \
-	-usb \
-	-device usb-mouse \
-	-device vfio-pci,host=04:00.0 \
+	-append "root=UUID=$ROOT_UUID" \
+	$pcie_command  \
 
 
 
@@ -23,6 +34,8 @@ qemu-system-x86_64 \
 	#-nographic \
 	#-append "root=UUID=a03bcef6-dee0-4de3-a505-f0c684cb3824 loglevel=3 console=ttyS0" \
 
+	#-usb \
+	#-device usb-mouse \
 
 
 	#-append "root=PARTUUID=8a05e362-a2d1-4f58-a484-ad770a11ae46 crypto=" \
