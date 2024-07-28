@@ -49,6 +49,7 @@ You'll need at least the file systems, the input devices, some sort of graphics 
             - PS/2 mouse
     - IEEE 1394
         - FireWire driver stack
+            - OHCI-1394 controllers
     - Graphics Support
         - Direct Rendering Manager
             - DRM support for bochs (qemu std vga)
